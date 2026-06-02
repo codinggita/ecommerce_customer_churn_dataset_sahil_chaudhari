@@ -15,6 +15,10 @@ app.use(express.json());
 app.use(loggerMiddleware);
 app.use(requestTimeMiddleware);
 
+// Routes
+const customerRoutes = require("./routes/customerRoutes");
+app.use("/api/v1/customers", customerRoutes);
+
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
