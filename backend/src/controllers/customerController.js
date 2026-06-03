@@ -12,7 +12,7 @@ const createCustomer = asyncHandler(async (req, res) => {
 });
 
 const getAllCustomers = asyncHandler(async (req, res) => {
-  const { page, limit, skip } = getPaginationOptions(req.query);
+  const { page, limit, skip, sort } = getPaginationOptions(req.query);
   
   const filter = buildCustomerFilter(req.query);
 
@@ -20,6 +20,7 @@ const getAllCustomers = asyncHandler(async (req, res) => {
     filter,
     skip,
     limit,
+    sort,
   });
 
   const metadata = getPaginationMetadata(page, limit, total);
@@ -175,6 +176,26 @@ const getCustomersByAnalytics = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { customers, pagination: metadata }, `Analytics for ${field} fetched`));
 });
 
+const getSortedCustomers = asyncHandler(async (req, res) => {
+  const { field, order } = req.params;
+  const { page, limit, skip } = getPaginationOptions(req.query);
+
+  const sortOrder = order === "asc" ? 1 : -1;
+  const sort = { [field]: sortOrder };
+
+  const { customers, total } = await customerService.getAllCustomers({
+    filter: { isDeleted: false },
+    skip,
+    limit,
+    sort,
+  });
+
+  const metadata = getPaginationMetadata(page, limit, total);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { customers, pagination: metadata }, `Customers sorted by ${field} ${order} fetched`));
+});
+
 module.exports = {
   createCustomer,
   getAllCustomers,
@@ -189,4 +210,5 @@ module.exports = {
   getCustomersByStatus,
   getCustomersBySegment,
   getCustomersByAnalytics,
+  getSortedCustomers,
 };

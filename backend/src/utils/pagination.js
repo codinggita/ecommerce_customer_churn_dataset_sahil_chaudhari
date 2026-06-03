@@ -16,7 +16,12 @@ const getPaginationOptions = (query) => {
   const limit = Math.max(1, Math.min(100, parseInt(query.limit) || 10));
   const skip = (page - 1) * limit;
 
-  return { page, limit, skip };
+  // Sorting logic
+  const sortBy = query.sortBy || "createdAt";
+  const sortOrder = query.sortOrder === "asc" ? 1 : -1;
+  const sort = { [sortBy]: sortOrder };
+
+  return { page, limit, skip, sort };
 };
 
 module.exports = {
