@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const customerController = require("../controllers/customerController");
 const validate = require("../middlewares/validationMiddleware");
+const { verifyJWT, isAdmin } = require("../middlewares/authMiddleware");
 const {
   createCustomerSchema,
   createCustomerBatchSchema,
@@ -9,9 +10,12 @@ const {
   customerQuerySchema,
 } = require("../validations/customerValidation");
 
-router.post("/bulk-create", validate(createCustomerBatchSchema), customerController.bulkCreateCustomers);
-router.patch("/bulk-update", customerController.bulkUpdateCustomers);
-router.delete("/bulk-delete", customerController.bulkDeleteCustomers);
+// Protect all routes - User must be logged in
+router.use(verifyJWT);
+
+router.post("/bulk-create", isAdmin, validate(createCustomerBatchSchema), customerController.bulkCreateCustomers);
+router.patch("/bulk-update", isAdmin, customerController.bulkUpdateCustomers);
+router.delete("/bulk-delete", isAdmin, customerController.bulkDeleteCustomers);
 
 router.get("/search", customerController.searchCustomers);
 
@@ -26,15 +30,15 @@ router.get("/filter/:filterType", customerController.getFilteredCustomers);
 router
   .route("/")
   .get(validate(customerQuerySchema, "query"), customerController.getAllCustomers)
-  .post(validate(createCustomerSchema), customerController.createCustomer);
+  .post(isAdmin, validate(createCustomerSchema), customerController.createCustomer);
 
 router.get("/exists/:id", customerController.checkCustomerExists);
 
 router
   .route("/:id")
   .get(customerController.getCustomerById)
-  .put(validate(updateCustomerSchema), customerController.updateCustomer)
-  .patch(validate(updateCustomerSchema), customerController.updateCustomer)
-  .delete(customerController.deleteCustomer);
+  .put(isAdmin, validate(updateCustomerSchema), customerController.updateCustomer)
+  .patch(isAdmin, validate(updateCustomerSchema), customerController.updateCustomer)
+  .delete(isAdmin, customerController.deleteCustomer);
 
 module.exports = router;
