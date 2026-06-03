@@ -13,6 +13,8 @@ router.post("/bulk-create", validate(createCustomerBatchSchema), customerControl
 router.patch("/bulk-update", customerController.bulkUpdateCustomers);
 router.delete("/bulk-delete", customerController.bulkDeleteCustomers);
 
+router.get("/search", customerController.searchCustomers);
+
 // Specialized Information Routes
 router.get("/status/:status", customerController.getCustomersByStatus);
 router.get("/segment/:segment", customerController.getCustomersBySegment);

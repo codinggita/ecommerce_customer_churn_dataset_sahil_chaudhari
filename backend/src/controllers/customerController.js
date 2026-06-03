@@ -196,6 +196,46 @@ const getSortedCustomers = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { customers, pagination: metadata }, `Customers sorted by ${field} ${order} fetched`));
 });
 
+const searchCustomers = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+  const { page, limit, skip, sort } = getPaginationOptions(req.query);
+
+  if (!q) {
+    throw new ApiError(400, "Search query 'q' is required");
+  }
+
+  let filter = { isDeleted: false };
+  const searchRegex = new RegExp(q, "i");
+
+  // Keyword Mapping logic
+  const keyword = q.toLowerCase().trim();
+  const searchConditions = [
+    { country: searchRegex },
+    { city: searchRegex },
+    { gender: searchRegex },
+  ];
+
+  if (keyword === "loyal") searchConditions.push({ membershipYears: { $gte: 3 } });
+  if (keyword === "churned") searchConditions.push({ churned: true });
+  if (keyword === "active") searchConditions.push({ churned: false });
+  if (keyword === "premium") searchConditions.push({ lifetimeValue: { $gte: 7000 } });
+  if (keyword === "high-value") searchConditions.push({ lifetimeValue: { $gte: 5000 } });
+
+  filter.$or = searchConditions;
+
+  const { customers, total } = await customerService.getAllCustomers({
+    filter,
+    skip,
+    limit,
+    sort,
+  });
+
+  const metadata = getPaginationMetadata(page, limit, total);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { customers, pagination: metadata }, `Search results for: ${q} fetched`));
+});
+
 module.exports = {
   createCustomer,
   getAllCustomers,
@@ -211,4 +251,5 @@ module.exports = {
   getCustomersBySegment,
   getCustomersByAnalytics,
   getSortedCustomers,
+  searchCustomers,
 };
